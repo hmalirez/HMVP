@@ -15,6 +15,7 @@ import 'package:hiddify/features/profile/model/profile_entity.dart';
 import 'package:hiddify/features/profile/notifier/profile_notifier.dart';
 import 'package:hiddify/features/profile/overview/profiles_notifier.dart';
 import 'package:hiddify/gen/fonts.gen.dart';
+import 'package:hiddify/utils/uri_utils.dart';
 import 'package:hiddify/utils/utils.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -453,7 +454,7 @@ class NewSiteSubscriptionInfo extends HookConsumerWidget {
       host = "@${uri.path.split("/").last}";
     }
     return InkWell(
-      onTap: () => launchUrl(Uri.parse(subInfo.webPageUrl ?? "")),
+      onTap: () => UriUtils.tryLaunch(Uri.parse(subInfo.webPageUrl ?? "")),
       child: Column(
         children: [
           const Icon(Icons.wifi_rounded, size: 24, color: Colors.blue),
