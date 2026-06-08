@@ -5,7 +5,6 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/model/constants.dart';
-import 'package:hiddify/features/profile/add/widgets/free_btns.dart';
 import 'package:hiddify/features/profile/add/widgets/widgets.dart';
 import 'package:hiddify/features/profile/model/profile_entity.dart';
 import 'package:hiddify/features/profile/notifier/profile_notifier.dart';
@@ -14,14 +13,12 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class AddProfileModal extends HookConsumerWidget {
   const AddProfileModal({super.key, this.url});
-  // static const warpConsentGiven = "warp_consent_given";
   final String? url;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isLoading = ref.watch(addProfileNotifierProvider).isLoading;
     final currentWidget = ref.watch(addProfilePageNotifierProvider);
-    ref.listen(freeSwitchNotifierProvider, (_, _) {});
     ref.listen(addProfileNotifierProvider, (previous, next) {
       if (next case AsyncData(value: final _?)) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -43,6 +40,8 @@ class AddProfileModal extends HookConsumerWidget {
           : switch (currentWidget) {
               AddProfilePages.options => const AddProfileOptions(),
               AddProfilePages.manual => const AddProfileManual(),
+              AddProfilePages.login => const AddProfileLogin(),
+              AddProfilePages.free => const AddProfileFree(),
             },
     );
   }
@@ -52,18 +51,16 @@ class AddProfileOptions extends HookConsumerWidget {
   const AddProfileOptions({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // final isLoadingProfile = ref.watch(addProfileNotifierProvider).isLoading;
-    final freeSwitch = ref.watch(freeSwitchNotifierProvider);
     final isDesktop = PlatformUtils.isDesktop;
     return LayoutBuilder(
       builder: (context, constraints) {
         final fixBtnsHeight =
-            (constraints.maxWidth - AddProfileModalConst.fixBtnsGap * AddProfileModalConst.fixBtnsGapCount) /
-            AddProfileModalConst.fixBtnsItemCount;
+            (constraints.maxWidth - AddProfileModalConst.fixBtnsGap * 2) /
+            1;
         final fullHeight = fixBtnsHeight + AddProfileModalConst.navBarHeight + 32;
-        final initial = !freeSwitch ? fullHeight : fullHeight + 180;
-        var min = !freeSwitch ? fullHeight : fullHeight + 100;
-        var max = !freeSwitch ? fullHeight / constraints.maxHeight : 0.85;
+        final initial = fullHeight;
+        var min = initial;
+        var max = initial / constraints.maxHeight;
         if (isDesktop) {
           min = initial;
           max = initial / constraints.maxHeight;
@@ -77,12 +74,130 @@ class AddProfileOptions extends HookConsumerWidget {
             children: [
               const Gap(AddProfileModalConst.fixBtnsGap),
               FixBtns(height: fixBtnsHeight),
-              if (freeSwitch) Expanded(child: FreeBtns(scrollController: scrollController)) else const Spacer(),
+              const Spacer(),
               const NavBar(),
             ],
           ),
         );
       },
+    );
+  }
+}
+
+class AddProfileLogin extends HookConsumerWidget {
+  const AddProfileLogin({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final t = ref.watch(translationsProvider).requireValue;
+    final formKey = useMemoized(() => GlobalKey<FormState>());
+    final usernameController = useTextEditingController();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Form(
+        key: formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 8, 12),
+              child: Row(
+                children: [
+                  Expanded(child: Text(t.common.login, style: theme.textTheme.headlineMedium)),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => ref.read(addProfilePageNotifierProvider.notifier).goOptions(),
+                  ),
+                ],
+              ),
+            ),
+            CustomTextFormField(
+              maxLines: 1,
+              controller: usernameController,
+              validator: (value) => (value?.isEmpty ?? true) ? t.pages.profileDetails.form.emptyName : null,
+              label: t.common.username,
+              hint: t.common.usernameHint,
+            ),
+            const Gap(16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(bottom: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: FilledButton(
+                      child: Text(t.common.login),
+                      onPressed: () async {
+                        if (formKey.currentState!.validate()) {
+                          await ref
+                              .read(addProfileNotifierProvider.notifier)
+                              .addSubscriptionWithUsername(usernameController.text.trim());
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Gap(16),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class AddProfileFree extends HookConsumerWidget {
+  const AddProfileFree({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = ref.watch(translationsProvider).requireValue;
+    final freeProfiles = ref.watch(freeProfilesNotifierProvider);
+    final theme = Theme.of(context);
+    
+    return freeProfiles.when(
+      data: (data) => data.isNotEmpty
+          ? ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: data.length,
+              itemBuilder: (context, index) {
+                final profile = data[index];
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    title: Text(profile.title.en),
+                    subtitle: Text(profile.sublink),
+                    trailing: const Icon(Icons.add_rounded),
+                    onTap: () async {
+                      await ref
+                          .read(addProfileNotifierProvider.notifier)
+                          .addManual(
+                            url: profile.sublink,
+                            userOverride: UserOverride(
+                              name: profile.title.en,
+                              updateInterval: 12,
+                            ),
+                          );
+                    },
+                  ),
+                );
+              },
+            )
+          : Center(
+              child: Text(
+                t.pages.profiles.freeSubNotFound,
+                style: theme.textTheme.bodySmall!.copyWith(color: theme.colorScheme.onSurface),
+              ),
+            ),
+      error: (error, stackTrace) => Center(
+        child: Text(
+          t.pages.profiles.failedToLoad,
+          style: theme.textTheme.bodyMedium!.copyWith(color: theme.colorScheme.onSurface),
+        ),
+      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
     );
   }
 }
@@ -241,7 +356,6 @@ class AddProfileManual extends HookConsumerWidget {
               ],
             ),
           ),
-          // const Gap(16),
         ],
       ),
     );

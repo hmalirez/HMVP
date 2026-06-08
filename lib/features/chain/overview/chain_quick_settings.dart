@@ -46,24 +46,20 @@ class ChainQuickSettings extends HookConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: Text(
-                      t.pages.settings.chain.levels.extraSecurity.title,
+                      t.pages.settings.chain.levels.mainProfile.title,
                       style: theme.textTheme.labelSmall?.copyWith(color: onSurfaceVariant),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const Gap(2),
-                  const ChainModeButton.extraSecurity(showConfiguration: true),
-                  const Gap(2),
-                  AnimatedOpacity(
-                    duration: ChainConst.finalIpDuration,
-                    opacity: ref.watch(ConfigOptions.chainStatus).isExtraSecurity() ? 1 : 0,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Text(
-                        t.pages.settings.chain.finalIp,
-                        style: theme.textTheme.labelSmall?.copyWith(color: ChainConst.finalIpColor(theme)),
-                      ),
+                  Container(
+                    height: 32,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    alignment: Alignment.center,
+                    child: CustomTextScroll(
+                      ref.watch(activeProfileProvider).value?.name ?? t.common.notSet,
+                      style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurface),
                     ),
                   ),
                 ],
@@ -98,52 +94,6 @@ class ChainQuickSettings extends HookConsumerWidget {
                         ),
                       ),
                     ),
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Icon(Icons.arrow_forward_rounded, size: 20, color: theme.colorScheme.primary),
-                      ),
-                      Flexible(
-                        child: Column(
-                          children: [
-                            Text(
-                              t.pages.settings.chain.levels.mainProfile.title,
-                              style: theme.textTheme.labelSmall?.copyWith(color: onSurfaceVariant),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const Gap(2),
-                            Container(
-                              height: 32,
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
-                              alignment: Alignment.center,
-                              child: CustomTextScroll(
-                                ref.watch(activeProfileProvider).value?.name ?? t.common.notSet,
-                                style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurface),
-                              ),
-                            ),
-                            AnimatedOpacity(
-                              duration: ChainConst.finalIpDuration,
-                              opacity: ref.watch(ConfigOptions.chainStatus).isExtraSecurity() ? 0 : 1,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 4),
-                                child: Text(
-                                  t.pages.settings.chain.finalIp,
-                                  style: theme.textTheme.labelSmall?.copyWith(color: ChainConst.finalIpColor(theme)),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Icon(Icons.arrow_forward_rounded, size: 20, color: theme.colorScheme.primary),
-                      ),
-                    ],
                   ),
                 ],
               ),
@@ -180,7 +130,6 @@ class ChainQuickSettings extends HookConsumerWidget {
                   const Gap(2),
                   const ChainModeButton.unblocker(showConfiguration: true),
                   const Gap(2),
-                  // For equal height
                   Opacity(
                     opacity: 0,
                     child: Padding(

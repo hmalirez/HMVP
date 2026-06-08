@@ -64,8 +64,6 @@ class AddProfileNotifier extends _$AddProfileNotifier with AppLogger {
     if (state.isLoading) return;
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      // final activeProfile = await ref.read(activeProfileProvider.future);
-      // final markAsActive = activeProfile == null || ref.read(Preferences.markNewProfileActive);
       final TaskEither<ProfileFailure, Unit> task;
       if (LinkParser.parse(rawInput) case (final rs)?) {
         loggy.debug("adding profile, url: [${rs.url}]");
@@ -106,6 +104,51 @@ class AddProfileNotifier extends _$AddProfileNotifier with AppLogger {
             },
             (r) {
               loggy.info("successfully added profile, mark as active? [true]");
+              return r;
+            },
+          )
+          .run();
+    });
+  }
+
+  Future<void> addSubscriptionWithUsername(String username) async {
+    if (state.isLoading) return;
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final subscriptionUrl = 'https://alirez.n-cpanel.xyz/Sub/Plans/Full.txt';
+      final httpClient = ref.read(httpClientProvider);
+      final response = await httpClient.get(subscriptionUrl);
+      if (response.statusCode != 200) {
+        throw Exception('Failed to fetch subscription list');
+      }
+      
+      final String content = response.data.toString();
+      final lines = content.split('\n');
+      
+      String? foundUrl;
+      for (final line in lines) {
+        if (line.contains('sub=$username')) {
+          foundUrl = line.trim();
+          break;
+        }
+      }
+      
+      if (foundUrl == null) {
+        throw Exception('Username not found in subscription list');
+      }
+      
+      final task = _profilesRepo.upsertRemote(
+        foundUrl,
+        userOverride: UserOverride(name: username),
+      );
+      return await task
+          .match(
+            (err) {
+              loggy.warning("failed to add profile", err);
+              throw err;
+            },
+            (r) {
+              loggy.info("successfully added profile for user [$username]");
               return r;
             },
           )
@@ -174,6 +217,8 @@ class FreeSwitchNotifier extends _$FreeSwitchNotifier {
   Future<void> onChange(bool value) async => state = value;
 }
 
+enum AddProfilePages { options, manual, login, free }
+
 @riverpod
 class AddProfilePageNotifier extends _$AddProfilePageNotifier {
   @override
@@ -181,9 +226,9 @@ class AddProfilePageNotifier extends _$AddProfilePageNotifier {
 
   void goOptions() => state = AddProfilePages.options;
   void goManual() => state = AddProfilePages.manual;
+  void goLogin() => state = AddProfilePages.login;
+  void goFree() => state = AddProfilePages.free;
 }
-
-enum AddProfilePages { options, manual }
 
 @riverpod
 class FreeProfilesNotifier extends _$FreeProfilesNotifier {
@@ -191,10 +236,25 @@ class FreeProfilesNotifier extends _$FreeProfilesNotifier {
   Future<List<FreeProfile>> build() async {
     final httpClient = ref.watch(httpClientProvider);
     final res = await httpClient.get(
-      'https://raw.githubusercontent.com/hiddify/hiddify-app/refs/heads/main/test.configs/free_configs',
+      'https://alirez.n-cpanel.xyz/Sub/Plans/Free.txt',
     );
     if (res.statusCode == 200) {
-      return FreeProfilesModel.fromJson(jsonDecode(res.data.toString()) as Map<String, dynamic>).profiles;
+      final content = res.data.toString();
+      final lines = content.split('\n');
+      final profiles = <FreeProfile>[];
+      for (final line in lines) {
+        final trimmed = line.trim();
+        if (trimmed.isNotEmpty) {
+          profiles.add(FreeProfile(
+            region: [],
+            title: StringByLocale(en: trimmed, fa: trimmed),
+            sublink: trimmed,
+            tags: ListOfStringByLocale(en: [], fa: []),
+            consent: StringByLocale(en: 'Free profile', fa: 'پروفایل رایگان'),
+          ));
+        }
+      }
+      return profiles;
     }
     return <FreeProfile>[];
   }

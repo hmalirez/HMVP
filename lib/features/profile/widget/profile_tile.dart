@@ -1,4 +1,3 @@
-import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -11,7 +10,6 @@ import 'package:hiddify/core/notification/in_app_notification_controller.dart';
 import 'package:hiddify/core/router/bottom_sheets/bottom_sheets_notifier.dart';
 import 'package:hiddify/core/router/dialog/dialog_notifier.dart';
 import 'package:hiddify/core/router/go_router/helper/active_breakpoint_notifier.dart';
-import 'package:hiddify/core/widget/adaptive_icon.dart';
 import 'package:hiddify/core/widget/adaptive_menu.dart';
 import 'package:hiddify/features/profile/model/profile_entity.dart';
 import 'package:hiddify/features/profile/notifier/profile_notifier.dart';
@@ -20,14 +18,11 @@ import 'package:hiddify/gen/fonts.gen.dart';
 import 'package:hiddify/utils/utils.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import 'package:url_launcher/url_launcher.dart';
-
 class ProfileTile extends HookConsumerWidget {
   const ProfileTile({super.key, required this.profile, this.isMain = false, this.margin = EdgeInsets.zero, this.color});
 
   final ProfileEntity profile;
 
-  /// home screen active profile card
   final bool isMain;
   final EdgeInsets margin;
   final Color? color;
@@ -53,21 +48,14 @@ class ProfileTile extends HookConsumerWidget {
 
     final showActionButton = profile is RemoteProfileEntity || !isMain;
 
-    // final effectiveMargin = isMain ? const EdgeInsets.symmetric(horizontal: 16, vertical: 8) : const EdgeInsets.only(left: 12, right: 12, bottom: 12);
-    // final double effectiveElevation = profile.active ? 12 : 4;
-    // final effectiveOutlineColor = profile.active ? theme.colorScheme.outline : Colors.transparent;
     return Card(
-      // margin: effectiveMargin,
-      // elevation: effectiveElevation,
       margin: margin,
       shape: RoundedRectangleBorder(
         side: profile.active ? BorderSide(color: theme.colorScheme.outline) : BorderSide.none,
         borderRadius: ProfileTileConst.cardBorderRadius,
       ),
-      // color: color ?? theme.colorScheme.secondaryContainer,
       elevation: profile.active ? 0 : 1,
 
-      // shadowColor: Colors.transparent,
       child: IntrinsicHeight(
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 48),
@@ -102,7 +90,6 @@ class ProfileTile extends HookConsumerWidget {
                         }
                       } else {
                         if (selectActiveMutation.state.isInProgress) return;
-                        // if (profile.active) return;
                         selectActiveMutation.setFuture(
                           ref.read(profilesNotifierProvider.notifier).selectActiveProfile(profile.id),
                         );
@@ -116,7 +103,6 @@ class ProfileTile extends HookConsumerWidget {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       child: Column(
-                        // mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -214,11 +200,11 @@ class ProfileActionButton extends HookConsumerWidget {
       return Semantics(
         button: true,
         child: Tooltip(
-          message: MaterialLocalizations.of(context).showMenuTooltip,
+          message: t.pages.profiles.update,
           child: InkWell(
             borderRadius: ProfileTileConst.startBorderRadius(Directionality.of(context)),
             onTap: toggleVisibility,
-            child: Icon(AdaptiveIcon(context).more),
+            child: const Icon(Icons.update_rounded),
           ),
         ),
       );
@@ -249,64 +235,6 @@ class ProfileActionsMenu extends HookConsumerWidget {
             ref.read(updateProfileNotifierProvider(profile.id).notifier).updateProfile(profile as RemoteProfileEntity);
           },
         ),
-      AdaptiveMenuItem(
-        title: t.common.share,
-        leadingIcon: Icon(AdaptiveIcon(context).share),
-        subItems: [
-          if (profile case RemoteProfileEntity(:final url, :final name)) ...[
-            AdaptiveMenuItem(
-              title: t.pages.profiles.share.urlToClipboard,
-              onTap: () async {
-                final link = LinkParser.generateSubShareLink(url, name);
-                if (link.isNotEmpty) {
-                  await Clipboard.setData(ClipboardData(text: link));
-                  if (context.mounted) {
-                    ref
-                        .read(inAppNotificationControllerProvider)
-                        .showSuccessToast(t.common.msg.export.clipboard.success);
-                  }
-                }
-              },
-            ),
-            AdaptiveMenuItem(
-              title: t.pages.profiles.share.showUrlQr,
-              onTap: () async {
-                final link = LinkParser.generateSubShareLink(url, name);
-                if (link.isNotEmpty) {
-                  await ref.read(dialogNotifierProvider.notifier).showQrCode(link, message: name);
-                }
-              },
-            ),
-          ],
-          AdaptiveMenuItem(
-            title: t.pages.profiles.share.jsonToClipboard,
-            onTap: () async => await ref.read(profilesNotifierProvider.notifier).exportConfigToClipboard(profile),
-          ),
-        ],
-      ),
-      AdaptiveMenuItem(
-        leadingIcon: const Icon(Icons.edit_rounded),
-        title: t.common.edit,
-        onTap: () {
-          if (Breakpoint(context).isMobile()) context.pop();
-          context.goNamed('profileDetails', pathParameters: {'id': profile.id});
-        },
-      ),
-      // if (!profile.active)
-      AdaptiveMenuItem(
-        leadingIcon: const Icon(Icons.delete_outline_rounded),
-        title: t.common.delete,
-        onTap: () async => await ref
-            .read(dialogNotifierProvider.notifier)
-            .showConfirmation(
-              title: t.dialogs.confirmation.profile.delete.title,
-              message: t.dialogs.confirmation.profile.delete.msg,
-            )
-            .then((deleteConfirmed) async {
-              if (!deleteConfirmed) return;
-              await ref.read(profilesNotifierProvider.notifier).deleteProfile(profile);
-            }),
-      ),
     ];
 
     return AdaptiveMenu(builder: builder, items: menuItems, child: child);
@@ -401,7 +329,6 @@ class NewTrafficSubscriptionInfo extends HookConsumerWidget {
                   consumed: subInfo.consumption.sizeGB(),
                   total: subInfo.total.sizeGB(),
                 ),
-                // style: theme.textTheme.body,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -448,7 +375,6 @@ class NewDaySubscriptionInfo extends HookConsumerWidget {
             Flexible(
               child: Text(
                 remaining.$1,
-                // style: theme.textTheme.bodySmall?.copyWith(color: remaining.$2),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -491,7 +417,6 @@ class NewDayTrafficSubscriptionInfo extends HookConsumerWidget {
         const SizedBox(height: 4),
         Text(
           remaining.$1,
-          // style: theme.textTheme.bodySmall?.copyWith(color: remaining.$2),
           overflow: TextOverflow.ellipsis,
         ),
         Directionality(
@@ -506,7 +431,6 @@ class NewDayTrafficSubscriptionInfo extends HookConsumerWidget {
               consumed: subInfo.consumption.sizeGB(),
               total: subInfo.total.sizeGB(),
             ),
-            // style: theme.textTheme.body,
             overflow: TextOverflow.ellipsis,
           ),
         ),
@@ -532,7 +456,7 @@ class NewSiteSubscriptionInfo extends HookConsumerWidget {
       onTap: () => launchUrl(Uri.parse(subInfo.webPageUrl ?? "")),
       child: Column(
         children: [
-          const Icon(FluentIcons.globe_person_24_filled, size: 24, color: Colors.blue),
+          const Icon(Icons.wifi_rounded, size: 24, color: Colors.blue),
           Text(t.components.subscriptionInfo.profileSite),
           const SizedBox(height: 4),
           Row(
@@ -542,7 +466,6 @@ class NewSiteSubscriptionInfo extends HookConsumerWidget {
               Flexible(
                 child: Text(
                   host,
-                  // style: theme.textTheme.bodySmall?.copyWith(color: remaining.$2),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -562,35 +485,6 @@ class RemainingTrafficIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // final startColor = ratio < 0.25
-    //     ? const Color.fromRGBO(93, 205, 251, 1.0)
-    //     : ratio < 0.65
-    //         ? const Color.fromRGBO(205, 199, 64, 1.0)
-    //         : const Color.fromRGBO(241, 82, 81, 1.0);
-    // final endColor = ratio < 0.25
-    //     ? const Color.fromRGBO(49, 146, 248, 1.0)
-    //     : ratio < 0.65
-    //         ? const Color.fromRGBO(98, 115, 32, 1.0)
-    //         : const Color.fromRGBO(139, 30, 36, 1.0);
     return LinearProgressIndicator(value: ratio, borderRadius: BorderRadius.circular(16), minHeight: 6);
-    // return HorizontalPercentIndicator(
-    //   height: 6,
-
-    //   borderRadius: 16,
-    //   loadingPercent: ratio,
-    //   // inactiveTrackColor: Color.fromRGBO(r, g, b, opacity),
-
-    //   activeTrackColor: [startColor, endColor],
-    // );
-    // return LinearPercentIndicator(
-    //     // percent: ratio,
-    //     // animation: false,
-    //     // padding: EdgeInsets.zero,
-    //     // lineHeight: 6,
-    //     // barRadius: const Radius.circular(16),
-    //     // linearGradient: LinearGradient(
-    //     //   colors: [startColor, endColor],
-    //     // ),
-    //     );
   }
 }

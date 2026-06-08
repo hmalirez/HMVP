@@ -54,6 +54,9 @@
     "psiphon": "سایفون",
     "profile": "پروفایل",
     "configuration": "پیکربندی",
+    "login": "ورود",
+    "username": "نام کاربری",
+    "usernameHint": "نام کاربری خود را وارد کنید",
     "interval": {
       "day": {
         "zero": "",

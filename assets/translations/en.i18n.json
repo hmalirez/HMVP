@@ -54,6 +54,9 @@
     "psiphon": "Psiphon",
     "profile": "Profile",
     "configuration": "Configuration",
+    "login": "Login",
+    "username": "Username",
+    "usernameHint": "Enter your username",
     "interval": {
       "day": {
         "zero": "",
