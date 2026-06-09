@@ -45,7 +45,7 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
-          api-level: 35
+          api-level: 36
           ndk: r28c
 
       - name: Prepare Android libs

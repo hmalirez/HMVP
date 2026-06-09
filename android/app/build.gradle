@@ -54,7 +54,7 @@ def flutterVersionName = localProperties.getProperty('flutter.versionName') ?: '
 android {
     namespace 'com.hiddify.hiddify'
     testNamespace "test.com.hiddify.hiddify"
-    compileSdkVersion 35
+    compileSdkVersion 36
     ndkVersion "28.2.13676358"
 
     compileOptions {
@@ -81,7 +81,7 @@ android {
 
     signingConfigs {
         release {
-            storeFile file("../debug.keystore")
+            storeFile file("debug.keystore")
             storePassword "android"
             keyAlias "androiddebugkey"
             keyPassword "android"
