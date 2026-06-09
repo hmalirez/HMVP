@@ -52,8 +52,8 @@ def flutterVersionCode = localProperties.getProperty('flutter.versionCode')?: '1
 def flutterVersionName = localProperties.getProperty('flutter.versionName') ?: '1.0'
 
 android {
-    namespace 'ir.antun.app.hm'
-    testNamespace "test.ir.antun.app.hm"
+    namespace 'com.hiddify.hiddify'
+    testNamespace "test.com.hiddify.hiddify"
     compileSdkVersion 36
     ndkVersion "28.2.13676358"
 
@@ -79,37 +79,9 @@ android {
         multiDexEnabled true
     }
 
-    splits {
-        abi {
-            enable true
-            reset()
-            //noinspection ChromeOsAbiSupport
-            include "armeabi-v7a", "arm64-v8a"
-
-            universalApk true
-        }
-    }
-
-    if (hasKeyStore) {
-        signingConfigs {
-            release {
-                keyAlias keystoreProperties['keyAlias']
-                keyPassword keystoreProperties['keyPassword']
-                storeFile file(keystoreProperties['storeFile'])
-                storePassword keystoreProperties['storePassword']
-            }
-        }
-    }
-
     buildTypes {
         release {
-            if (hasKeyStore) {
-                signingConfig signingConfigs.release
-            } else {
-                signingConfig signingConfigs.debug
-            }
             ndk {
-                //noinspection ChromeOsAbiSupport
                 abiFilters "armeabi-v7a", "arm64-v8a"
                 debugSymbolLevel 'FULL'
             }
@@ -119,6 +91,7 @@ android {
     buildFeatures {
         viewBinding true
         aidl true
+        buildConfig true
     }
 
 }
