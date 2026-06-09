@@ -22,31 +22,8 @@ env:
   TARGET_NAME_apk: "Hiddify-Android"
 
 jobs:
-  test:
-    outputs:
-      draftBuildCode: ${{ steps.draftBuildCode.outputs.datetime }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: subosito/flutter-action@v2.21.0
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: 'stable'
-          cache: true
-          
-      - name: Prepare
-        run: make linux-amd64-prepare
-      - name: Test
-        run: flutter test
-
-      - name: make draftBuildCode
-        id: draftBuildCode
-        run: echo "::set-output name=datetime::$(date +'%d.%H.%M')"
-
   build:
-    needs: test
     permissions: write-all
-    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
       - name: checkout
@@ -85,7 +62,6 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Cache Gradle
-        if: ${{ startsWith('android','android') }}
         uses: actions/cache@v5
         with:
           path: |
@@ -99,15 +75,6 @@ jobs:
         run: |
           make android-apk-install-deps  
           echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
-
-      - name: Setup Android Signing Properties
-        if: ${{ inputs.upload-artifact }}
-        run: |
-          echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 --decode > android/key.jks
-          echo "storeFile=$(pwd)/android/key.jks" > android/key.properties
-          echo "storePassword=${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}" >> android/key.properties
-          echo "keyPassword=${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}" >> android/key.properties
-          echo "keyAlias=${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}" >> android/key.properties
 
       - name: Prepare for Android APK
         run: make android-apk-prepare
