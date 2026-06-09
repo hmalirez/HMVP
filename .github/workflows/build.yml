@@ -65,7 +65,7 @@ jobs:
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
-          flutter build apk \
+          flutter build apk --release --split-per-abi \
             --dart-define=sentry_dsn=${SENTRY_DSN} \
             --dart-define=FLUTTER_BUILD_NAME=1.0.0 \
             --dart-define=FLUTTER_BUILD_NUMBER=1
