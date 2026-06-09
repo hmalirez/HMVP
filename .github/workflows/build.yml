@@ -79,6 +79,9 @@ jobs:
           mkdir -p android/app/libs
           curl -L https://github.com/hiddify/hiddify-next-core/releases/download/draft/hiddify-lib-android.tar.gz | tar xz -C android/app/libs/
 
+      - name: Build runner
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+
       - name: Build Android APK
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
