@@ -245,9 +245,23 @@ class FreeProfilesNotifier extends _$FreeProfilesNotifier {
       for (final line in lines) {
         final trimmed = line.trim();
         if (trimmed.isNotEmpty) {
+          final uri = Uri.tryParse(trimmed);
+          String displayName = trimmed;
+          if (uri != null) {
+            final pathSegments = uri.pathSegments;
+            if (pathSegments.isNotEmpty) {
+              final lastSegment = pathSegments.last;
+              final dotIndex = lastSegment.lastIndexOf('.');
+              if (dotIndex != -1) {
+                displayName = lastSegment.substring(0, dotIndex);
+              } else {
+                displayName = lastSegment;
+              }
+            }
+          }
           profiles.add(FreeProfile(
             region: [],
-            title: StringByLocale(en: trimmed, fa: trimmed),
+            title: StringByLocale(en: displayName, fa: displayName),
             sublink: trimmed,
             tags: ListOfStringByLocale(en: [], fa: []),
             consent: StringByLocale(en: 'Free profile', fa: 'پروفایل رایگان'),
